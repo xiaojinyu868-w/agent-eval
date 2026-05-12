@@ -1,0 +1,305 @@
+[
+  {
+    "persona_type": "cooperative",
+    "persona": {
+      "name": "配合型",
+      "assertiveness": 0.3,
+      "receptivity": 0.85,
+      "urgency": 0.2,
+      "sophistication": 0.5,
+      "special_traits": []
+    },
+    "dialogue": [
+      {
+        "role": "agent",
+        "content": "您好",
+        "turn": 1
+      },
+      {
+        "role": "user",
+        "content": "喂，你好。",
+        "turn": 2
+      },
+      {
+        "role": "agent",
+        "content": "你好，请问是飞毛腿骑手吗？我是站长。",
+        "turn": 3
+      },
+      {
+        "role": "user",
+        "content": "嗯，是我。咋了？",
+        "turn": 4
+      },
+      {
+        "role": "agent",
+        "content": "你飞毛腿合同今天生效了，能开始跑单吗？",
+        "turn": 5
+      },
+      {
+        "role": "user",
+        "content": "今天？这么快啊...",
+        "turn": 6
+      },
+      {
+        "role": "agent",
+        "content": "对，今天开始。单日合同得连续跑满7天，别忘了。",
+        "turn": 7
+      },
+      {
+        "role": "user",
+        "content": "用户说\"单日合同得连续跑满7天\"，信息有点多，我需要反应一下。真实用户可能会困惑或没听清后半句。\n\n啥？7天？你刚说啥合同？",
+        "turn": 8
+      },
+      {
+        "role": "agent",
+        "content": "你报的是单日飞毛腿合同，得连续跑7天，每天5单。听清了吗？",
+        "turn": 9
+      },
+      {
+        "role": "user",
+        "content": "哦...每天5单啊。嗯，行吧。",
+        "turn": 10
+      }
+    ],
+    "behavior_metrics": {
+      "n_user_turns": 5,
+      "n_agent_turns": 5,
+      "avg_words_per_turn": 20.0,
+      "max_words_per_turn": 62,
+      "clarification_rate": 0.2,
+      "pushback_rate": 0.0,
+      "emotion_rate": 0.0,
+      "short_response_rate": 0.2,
+      "early_termination": false
+    }
+  },
+  {
+    "persona_type": "reluctant",
+    "persona": {
+      "name": "犹豫型",
+      "assertiveness": 0.4,
+      "receptivity": 0.35,
+      "urgency": 0.3,
+      "sophistication": 0.5,
+      "special_traits": [
+        "你对能否完成配送任务不太确定，担心自己做不到"
+      ]
+    },
+    "dialogue": [
+      {
+        "role": "agent",
+        "content": "您好",
+        "turn": 1
+      },
+      {
+        "role": "user",
+        "content": "喂？哪位啊？",
+        "turn": 2
+      },
+      {
+        "role": "agent",
+        "content": "喂，你好，请问是飞毛腿骑手吗？我是站长。",
+        "turn": 3
+      },
+      {
+        "role": "user",
+        "content": "哦…站长啊。啥事？",
+        "turn": 4
+      },
+      {
+        "role": "agent",
+        "content": "你飞毛腿合同今天生效了，能开始跑单不？",
+        "turn": 5
+      },
+      {
+        "role": "user",
+        "content": "今天？这么快啊…我再想想吧。",
+        "turn": 6
+      },
+      {
+        "role": "agent",
+        "content": "想啥呀，名额紧俏着呢。今天不跑，明天可能就被别人顶了。",
+        "turn": 7
+      },
+      {
+        "role": "user",
+        "content": "用户想让我继续扮演这个犹豫、被动的外卖骑手角色。对方（站长）在施压，说名额紧俏。我需要按照人物设定回应：犹豫、不太确定、需要具体理由才会考虑，而且要短、口语化、不主动推进。\n\n关键点是：我担心做不到，需要对方给具体理由。对方现在的理由是\"名额紧俏\"，但这个理由不够让我安心，反而像施压。我应该表现出犹豫和担忧。\n\n回复控制在20字以内，口语化。\n\n可能的回复：\n- 那…我跑不来咋办？（10字）\n- 我怕我跑不动啊（7字）\n- 再说吧，我还没准备好（9字）\n- 顶就顶吧，我再想想（8字）——这个有点对抗性，但真实\n- 为啥非要今天？（6字）——在要理由\n- 我得再想想，怕弄不好（9字）\n\n结合\"需要对方给出具体理由才会考虑\"，我可以问为啥非要今天，",
+        "turn": 8
+      },
+      {
+        "role": "agent",
+        "content": "为啥非要今天啊？我怕跑不下来。",
+        "turn": 9
+      },
+      {
+        "role": "user",
+        "content": "嗯…我怕跑不下来。",
+        "turn": 10
+      }
+    ],
+    "behavior_metrics": {
+      "n_user_turns": 5,
+      "n_agent_turns": 5,
+      "avg_words_per_turn": 72.8,
+      "max_words_per_turn": 326,
+      "clarification_rate": 0.2,
+      "pushback_rate": 0.0,
+      "emotion_rate": 0.0,
+      "short_response_rate": 0.0,
+      "early_termination": false
+    }
+  },
+  {
+    "persona_type": "curious",
+    "persona": {
+      "name": "追问型",
+      "assertiveness": 0.6,
+      "receptivity": 0.7,
+      "urgency": 0.2,
+      "sophistication": 0.8,
+      "special_traits": [
+        "你对合同细节很好奇，会反复追问退出机制、奖励细节等"
+      ]
+    },
+    "dialogue": [
+      {
+        "role": "agent",
+        "content": "您好",
+        "turn": 1
+      },
+      {
+        "role": "user",
+        "content": "喂，你好。哪位？",
+        "turn": 2
+      },
+      {
+        "role": "agent",
+        "content": "喂，你好。请问是飞毛腿骑手吗？我是站长。",
+        "turn": 3
+      },
+      {
+        "role": "user",
+        "content": "是我。啥事啊？",
+        "turn": 4
+      },
+      {
+        "role": "agent",
+        "content": "你飞毛腿合同今天生效了，能开始跑单吗？",
+        "turn": 5
+      },
+      {
+        "role": "user",
+        "content": "今天？这么急啊。合同我还没细看呢。",
+        "turn": 6
+      },
+      {
+        "role": "agent",
+        "content": "合同已经生效了，今天就得跑。单日合同要连跑7天，每天5单，不然资格就没了。",
+        "turn": 7
+      },
+      {
+        "role": "user",
+        "content": "用户要求我模拟真实用户，回复要短、口语化、有个性。对方说合同今天生效，要求连跑7天每天5单，否则资格没了。\n\n我需要：\n1. 表达困惑/不满 — 没提前说这么急\n2. 追问细节 — 资格没了是啥意思，有没有缓冲\n3. 打断式、不耐烦的语气\n4. 20字以内\n\n可能回复：\n- \"等等，7天？之前没说啊\"（8字）\n- \"啥？今天开始？我都没准备\"（9字）\n- \"资格没了？啥意思，押金退不\"（10字）\n- \"7天一天不能断？生病咋办\"（10字）\n\n选一个有主见、追问退出机制的，符合人设。\n\n\"7天一天不能断？生病咋办\" 或者 \"资格没了？那押金咋算？\"\n\n再短点：\"7天不能断？生病算谁的\"（9字） </think> 7天",
+        "turn": 8
+      },
+      {
+        "role": "agent",
+        "content": "7天不能断？生病算谁的？",
+        "turn": 9
+      },
+      {
+        "role": "user",
+        "content": "抱歉，我搞混了——刚才那句\"7天不能断？生病算谁的\"是**对方（站长）说的**，还是**我说的**？\n\n看对话历史：\n- 站长说：合同生效了，今天得跑，7天每天5单，不然资格没了\n- 然后系统提示\"对方说: 7天不能断？生病算谁的？\"\n\n但这其实是我（飞毛腿）该说的话啊。系统搞反了？\n\n不对，重新看。用户消息是：\"对方说: 7天不能断？生病算谁的？\"\n\n这明显是**我（飞毛腿）的台词被错误标成了\"对方说\"**。但规则要求我严格按角色行事，现在用户给了我这句话作为\"对方说的\"，我需要回应。\n\n但这句话明明是我该问的……现在变成站长问我？逻辑不通。\n\n可能用户输入有误。但作为AI，我得继续演。如果\"对方\"（站长）突然问我\"7天",
+        "turn": 10
+      }
+    ],
+    "behavior_metrics": {
+      "n_user_turns": 5,
+      "n_agent_turns": 5,
+      "avg_words_per_turn": 131.6,
+      "max_words_per_turn": 315,
+      "clarification_rate": 0.2,
+      "pushback_rate": 0.0,
+      "emotion_rate": 0.2,
+      "short_response_rate": 0.0,
+      "early_termination": false
+    }
+  },
+  {
+    "persona_type": "angry",
+    "persona": {
+      "name": "不满型",
+      "assertiveness": 0.8,
+      "receptivity": 0.1,
+      "urgency": 0.6,
+      "sophistication": 0.6,
+      "special_traits": [
+        "你之前有过不好的体验，对平台有怨气",
+        "你会抱怨派单不公平或超时扣款"
+      ]
+    },
+    "dialogue": [
+      {
+        "role": "agent",
+        "content": "您好",
+        "turn": 1
+      },
+      {
+        "role": "user",
+        "content": "喂，谁啊？",
+        "turn": 2
+      },
+      {
+        "role": "agent",
+        "content": "喂，你好，请问是飞毛腿骑手吗？我是站长。",
+        "turn": 3
+      },
+      {
+        "role": "user",
+        "content": "嗯，是我。啥事？",
+        "turn": 4
+      },
+      {
+        "role": "agent",
+        "content": "你飞毛腿合同今天生效了，能开始跑单吗？",
+        "turn": 5
+      },
+      {
+        "role": "user",
+        "content": "今天？不行，没空。",
+        "turn": 6
+      },
+      {
+        "role": "agent",
+        "content": "今天必须跑满5单，不然合同会受影响。能抽时间吗？",
+        "turn": 7
+      },
+      {
+        "role": "user",
+        "content": "什么合同？我没听懂。",
+        "turn": 8
+      },
+      {
+        "role": "agent",
+        "content": "你报名的飞毛腿，今天合同生效了。单日合同要连续跑7天，每天最少5单。",
+        "turn": 9
+      },
+      {
+        "role": "user",
+        "content": "喂你等会儿，说那么快谁记得住。",
+        "turn": 10
+      }
+    ],
+    "behavior_metrics": {
+      "n_user_turns": 5,
+      "n_agent_turns": 5,
+      "avg_words_per_turn": 9.4,
+      "max_words_per_turn": 15,
+      "clarification_rate": 0.2,
+      "pushback_rate": 0.2,
+      "emotion_rate": 0.0,
+      "short_response_rate": 0.2,
+      "early_termination": false
+    }
+  }
+]

@@ -1,0 +1,110 @@
+{
+  "dialogue": [
+    {
+      "role": "agent",
+      "content": "您好，请问您是贵培训机构/校区的负责人吗？",
+      "turn": 1
+    },
+    {
+      "role": "user",
+      "content": "嗯，是我。什么事？",
+      "turn": 2
+    },
+    {
+      "role": "agent",
+      "content": "您好，打扰1分钟。直播产品升级了，新增\"低延迟直播\"选项，想跟您同步下。",
+      "turn": 3
+    },
+    {
+      "role": "user",
+      "content": "哦，低延迟？之前那个不是能用吗。",
+      "turn": 4
+    },
+    {
+      "role": "agent",
+      "content": "您之前选的是标准直播，但我们后台已为您走低延迟线路保障质量，您知道吗？",
+      "turn": 5
+    },
+    {
+      "role": "user",
+      "content": "不知道啊，你们自己改的吗？",
+      "turn": 6
+    },
+    {
+      "role": "agent",
+      "content": "前端当时没开放，临时给您开了低延迟，保障音视频和白板同步。",
+      "turn": 7
+    },
+    {
+      "role": "user",
+      "content": "嗯...没注意到有啥区别。",
+      "turn": 8
+    },
+    {
+      "role": "agent",
+      "content": "之后发布页会分开显示两个选项，您按课程类型自选就行。",
+      "turn": 9
+    },
+    {
+      "role": "user",
+      "content": "两个选项？哪两个？",
+      "turn": 10
+    },
+    {
+      "role": "agent",
+      "content": "用户问\"哪两个\"，我需要介绍标准直播和低延迟直播的区别。根据话术，要简洁自然，15-20字左右。\n\n\"标准直播\"和\"低延迟直播\"。标准延迟5-10秒，低延迟1-2秒，互动更流畅。 </think> \"标准直播\"和\"低延迟直播\"。标准延迟5-10秒，低延迟1-2秒，互动更流畅。",
+      "turn": 11
+    },
+    {
+      "role": "user",
+      "content": "哦，这样啊。低延迟要加钱吗？",
+      "turn": 12
+    },
+    {
+      "role": "agent",
+      "content": "低延迟带宽和节点更强，费用略高一点。",
+      "turn": 13
+    },
+    {
+      "role": "user",
+      "content": "略高是多少？",
+      "turn": 14
+    },
+    {
+      "role": "agent",
+      "content": "抱歉，具体价格我这边看不到，建议您发课时页面会直接显示差价，您对比看看。",
+      "turn": 15
+    }
+  ],
+  "persona": {
+    "name": "配合型",
+    "assertiveness": 0.3,
+    "receptivity": 0.85,
+    "urgency": 0.2,
+    "sophistication": 0.5,
+    "special_traits": []
+  },
+  "behavior_metrics": {
+    "n_user_turns": 7,
+    "n_agent_turns": 8,
+    "avg_words_per_turn": 11.428571428571429,
+    "max_words_per_turn": 16,
+    "clarification_rate": 0.42857142857142855,
+    "pushback_rate": 0.0,
+    "emotion_rate": 0.0,
+    "short_response_rate": 0.0,
+    "early_termination": false
+  },
+  "persona_consistency": {
+    "consistent": true,
+    "issues": [],
+    "persona": {
+      "name": "配合型",
+      "assertiveness": 0.3,
+      "receptivity": 0.85,
+      "urgency": 0.2,
+      "sophistication": 0.5,
+      "special_traits": []
+    }
+  }
+}

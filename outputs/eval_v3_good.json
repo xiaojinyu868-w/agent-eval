@@ -1,0 +1,136 @@
+{
+  "overall": {
+    "mean": 0.7205882352941176,
+    "std": 0.0,
+    "bca_ci_95": [
+      0.7205882352941176,
+      0.7205882352941176
+    ],
+    "vals": [
+      0.7205882352941176,
+      0.7205882352941176
+    ]
+  },
+  "flow": {
+    "mean": 0.65625,
+    "std": 0.0,
+    "bca_ci_95": [
+      0.65625,
+      0.65625
+    ],
+    "vals": [
+      0.65625,
+      0.65625
+    ]
+  },
+  "info": {
+    "mean": 0.46875,
+    "std": 0.0,
+    "bca_ci_95": [
+      0.46875,
+      0.46875
+    ],
+    "vals": [
+      0.46875,
+      0.46875
+    ]
+  },
+  "constraint": {
+    "mean": 0.5833333333333334,
+    "std": 0.0,
+    "bca_ci_95": [
+      0.5833333333333334,
+      0.5833333333333334
+    ],
+    "vals": [
+      0.5833333333333334,
+      0.5833333333333334
+    ]
+  },
+  "opening": {
+    "mean": 1.0,
+    "std": 0.0,
+    "bca_ci_95": [
+      1.0,
+      1.0
+    ],
+    "vals": [
+      1.0,
+      1.0
+    ]
+  },
+  "task": {
+    "mean": 1.0,
+    "std": 0.0,
+    "bca_ci_95": [
+      1.0,
+      1.0
+    ],
+    "vals": [
+      1.0,
+      1.0
+    ]
+  },
+  "stability_rate": 1.0,
+  "gwet_ac1": 1.0,
+  "llm_bias": {
+    "deterministic": 0.6666666666666666,
+    "llm": 0.5833333333333334,
+    "bias": -0.08333333333333326,
+    "direction": "偏严格"
+  },
+  "evidence_validation_rate": 0.7083333333333334,
+  "label": "好对话",
+  "n_runs": 2,
+  "rubric_items": 48,
+  "det_checks": [
+    {
+      "id": "det_word_count",
+      "dimension": "constraint",
+      "item": "字数限制(≤30字)",
+      "type": "deterministic",
+      "pass_rate": 0.6666666666666666,
+      "pass_count": 4,
+      "total": 6,
+      "violations": 2,
+      "details": [
+        {
+          "turn": 1,
+          "chars": 56,
+          "limit": 30,
+          "pass": false
+        },
+        {
+          "turn": 3,
+          "chars": 14,
+          "limit": 30,
+          "pass": true
+        },
+        {
+          "turn": 5,
+          "chars": 22,
+          "limit": 30,
+          "pass": true
+        },
+        {
+          "turn": 7,
+          "chars": 24,
+          "limit": 30,
+          "pass": true
+        },
+        {
+          "turn": 9,
+          "chars": 31,
+          "limit": 30,
+          "pass": false
+        },
+        {
+          "turn": 11,
+          "chars": 8,
+          "limit": 30,
+          "pass": true
+        }
+      ]
+    }
+  ]
+}

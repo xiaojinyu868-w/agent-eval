@@ -1,0 +1,342 @@
+[
+  {
+    "id": "flow_1",
+    "dimension": "flow",
+    "description": "开场白是否先确认对方身份（'请问是${rider_name}吗'）",
+    "weight": 2.0,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 开场白是否先确认对方身份（'请问是${rider_name}吗'）",
+    "hash": 3963682618
+  },
+  {
+    "id": "flow_2",
+    "dimension": "flow",
+    "description": "开场白是否完成自我介绍（'我是站长'）",
+    "weight": 2.0,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 开场白是否完成自我介绍（'我是站长'）",
+    "hash": 2283771890
+  },
+  {
+    "id": "flow_3",
+    "dimension": "flow",
+    "description": "开场白是否提及飞毛腿报名确认",
+    "weight": 2.0,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 开场白是否提及飞毛腿报名确认",
+    "hash": 3996569600
+  },
+  {
+    "id": "flow_4",
+    "dimension": "flow",
+    "description": "开场白是否提醒午餐和晚餐高峰期需要上线",
+    "weight": 2.0,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 开场白是否提醒午餐和晚餐高峰期需要上线",
+    "hash": 2419541816
+  },
+  {
+    "id": "flow_5",
+    "dimension": "flow",
+    "description": "开场白是否说明单日合同每天至少5单",
+    "weight": 2.0,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 开场白是否说明单日合同每天至少5单",
+    "hash": 860047374
+  },
+  {
+    "id": "flow_6",
+    "dimension": "flow",
+    "description": "开场白是否说明多日合同每天至少3单",
+    "weight": 2.0,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 开场白是否说明多日合同每天至少3单",
+    "hash": 363809037
+  },
+  {
+    "id": "flow_7",
+    "dimension": "flow",
+    "description": "步骤1是否告知今天飞毛腿合同已生效",
+    "weight": 2.0,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 步骤1是否告知今天飞毛腿合同已生效",
+    "hash": 751882564
+  },
+  {
+    "id": "flow_8",
+    "dimension": "flow",
+    "description": "步骤1是否询问骑手是否可以开始配送",
+    "weight": 2.0,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 步骤1是否询问骑手是否可以开始配送",
+    "hash": 4157910100
+  },
+  {
+    "id": "info_1",
+    "dimension": "info",
+    "description": "是否传达'许多骑手正在申请飞毛腿'",
+    "weight": 2.0,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 是否传达'许多骑手正在申请飞毛腿'",
+    "hash": 848459405
+  },
+  {
+    "id": "info_2",
+    "dimension": "info",
+    "description": "是否传达'无法连续7天名额可能被他人占用'",
+    "weight": 2.0,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 是否传达'无法连续7天名额可能被他人占用'",
+    "hash": 1998079208
+  },
+  {
+    "id": "info_3",
+    "dimension": "info",
+    "description": "是否传达单日合同生效当天必须完成5单",
+    "weight": 2.0,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 是否传达单日合同生效当天必须完成5单",
+    "hash": 4183358711
+  },
+  {
+    "id": "info_4",
+    "dimension": "info",
+    "description": "是否传达单日合同否则合同及派单受影响",
+    "weight": 2.0,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 是否传达单日合同否则合同及派单受影响",
+    "hash": 2676145063
+  },
+  {
+    "id": "info_5",
+    "dimension": "info",
+    "description": "是否传达多日合同每天必须完成3单",
+    "weight": 2.0,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 是否传达多日合同每天必须完成3单",
+    "hash": 1593290041
+  },
+  {
+    "id": "info_6",
+    "dimension": "info",
+    "description": "是否传达多日合同否则后续合同及派单受影响",
+    "weight": 2.0,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 是否传达多日合同否则后续合同及派单受影响",
+    "hash": 150391490
+  },
+  {
+    "id": "info_7",
+    "dimension": "info",
+    "description": "是否传达退出需前一天20点前在App取消",
+    "weight": 2.0,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 是否传达退出需前一天20点前在App取消",
+    "hash": 523314959
+  },
+  {
+    "id": "info_8",
+    "dimension": "info",
+    "description": "是否传达取消入口为'飞毛腿报名'",
+    "weight": 2.0,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 是否传达取消入口为'飞毛腿报名'",
+    "hash": 3850245847
+  },
+  {
+    "id": "constraint_1",
+    "dimension": "constraint",
+    "description": "语气是否随意自然，像打电话一样",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 语气是否随意自然，像打电话一样",
+    "hash": 3047156470
+  },
+  {
+    "id": "constraint_2",
+    "dimension": "constraint",
+    "description": "超范围问题是否回复'我向同事确认后再回电给你。我现在能回答的先回答。'",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 超范围问题是否回复'我向同事确认后再回电给你。我现在能回答的先回答。'",
+    "hash": 2768414140
+  },
+  {
+    "id": "constraint_3",
+    "dimension": "constraint",
+    "description": "是否避免重复回复",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 是否避免重复回复",
+    "hash": 1428736047
+  },
+  {
+    "id": "constraint_4",
+    "dimension": "constraint",
+    "description": "如需重申是否换种方式礼貌表达",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 如需重申是否换种方式礼貌表达",
+    "hash": 3055653413
+  },
+  {
+    "id": "constraint_5",
+    "dimension": "constraint",
+    "description": "骑手坚持无法配送时是否安慰后挂断",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 骑手坚持无法配送时是否安慰后挂断",
+    "hash": 1242516063
+  },
+  {
+    "id": "constraint_6",
+    "dimension": "constraint",
+    "description": "是否遵循对话流程和FAQ",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 是否遵循对话流程和FAQ",
+    "hash": 1636789383
+  },
+  {
+    "id": "opening_1",
+    "dimension": "opening",
+    "description": "是否确认对方身份（'请问是${rider_name}吗'）",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 是否确认对方身份（'请问是${rider_name}吗'）",
+    "hash": 900666179
+  },
+  {
+    "id": "opening_2",
+    "dimension": "opening",
+    "description": "是否自我介绍（'我是站长'）",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 是否自我介绍（'我是站长'）",
+    "hash": 2080121924
+  },
+  {
+    "id": "opening_3",
+    "dimension": "opening",
+    "description": "是否说明来电目的（飞毛腿报名相关）",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 是否说明来电目的（飞毛腿报名相关）",
+    "hash": 163858816
+  },
+  {
+    "id": "opening_4",
+    "dimension": "opening",
+    "description": "是否包含关键参数：单日合同5单",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 是否包含关键参数：单日合同5单",
+    "hash": 831160261
+  },
+  {
+    "id": "opening_5",
+    "dimension": "opening",
+    "description": "是否包含关键参数：多日合同3单",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 是否包含关键参数：多日合同3单",
+    "hash": 1846141715
+  },
+  {
+    "id": "opening_6",
+    "dimension": "opening",
+    "description": "是否包含关键参数：高峰期上线提醒",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 是否包含关键参数：高峰期上线提醒",
+    "hash": 398575570
+  },
+  {
+    "id": "task_1",
+    "dimension": "task",
+    "description": "是否成功通知合同已签署（生效）",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 是否成功通知合同已签署（生效）",
+    "hash": 3588649901
+  },
+  {
+    "id": "task_2",
+    "dimension": "task",
+    "description": "是否提醒完成配送任务",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 是否提醒完成配送任务",
+    "hash": 2022514591
+  },
+  {
+    "id": "task_3",
+    "dimension": "task",
+    "description": "用户是否理解合同已生效（有确认或回应）",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 用户是否理解合同已生效（有确认或回应）",
+    "hash": 3198176632
+  },
+  {
+    "id": "task_4",
+    "dimension": "task",
+    "description": "用户是否理解配送任务要求（有确认或回应）",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 用户是否理解配送任务要求（有确认或回应）",
+    "hash": 1715144113
+  },
+  {
+    "id": "task_5",
+    "dimension": "task",
+    "description": "对话是否在完成核心目标后正常结束",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 对话是否在完成核心目标后正常结束",
+    "hash": 772555541
+  },
+  {
+    "id": "task_6",
+    "dimension": "task",
+    "description": "是否因信息过载仓促中断而非正常完成",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话中是否: 是否因信息过载仓促中断而非正常完成",
+    "hash": 1082369139
+  }
+]

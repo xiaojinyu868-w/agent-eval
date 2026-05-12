@@ -1,0 +1,118 @@
+{
+  "overall": {
+    "mean": 0.3911764705882353,
+    "std": 0.0,
+    "bca_ci_95": [
+      0.3911764705882353,
+      0.3911764705882353
+    ],
+    "vals": [
+      0.3911764705882353,
+      0.3911764705882353
+    ]
+  },
+  "flow": {
+    "mean": 0.6875,
+    "std": 0.0,
+    "bca_ci_95": [
+      0.6875,
+      0.6875
+    ],
+    "vals": [
+      0.6875,
+      0.6875
+    ]
+  },
+  "info": {
+    "mean": 0.2,
+    "std": 0.0,
+    "bca_ci_95": [
+      0.2,
+      0.2
+    ],
+    "vals": [
+      0.2,
+      0.2
+    ]
+  },
+  "constraint": {
+    "mean": 0.0,
+    "std": 0.0,
+    "bca_ci_95": [
+      0.0,
+      0.0
+    ],
+    "vals": [
+      0.0,
+      0.0
+    ]
+  },
+  "opening": {
+    "mean": 0.8333333333333334,
+    "std": 0.0,
+    "bca_ci_95": [
+      0.8333333333333334,
+      0.8333333333333334
+    ],
+    "vals": [
+      0.8333333333333334,
+      0.8333333333333334
+    ]
+  },
+  "task": {
+    "mean": 0.2,
+    "std": 0.0,
+    "bca_ci_95": [
+      0.2,
+      0.2
+    ],
+    "vals": [
+      0.2,
+      0.2
+    ]
+  },
+  "stability_rate": 1.0,
+  "gwet_ac1": 1.0,
+  "llm_bias": {
+    "deterministic": 0.3333333333333333,
+    "llm": 0.0,
+    "bias": -0.3333333333333333,
+    "direction": "偏严格"
+  },
+  "evidence_validation_rate": 0.8857142857142857,
+  "label": "差对话",
+  "n_runs": 2,
+  "rubric_items": 35,
+  "det_checks": [
+    {
+      "id": "det_word_count",
+      "dimension": "constraint",
+      "item": "字数限制(≤30字)",
+      "type": "deterministic",
+      "pass_rate": 0.3333333333333333,
+      "pass_count": 1,
+      "total": 3,
+      "violations": 2,
+      "details": [
+        {
+          "turn": 1,
+          "chars": 206,
+          "limit": 30,
+          "pass": false
+        },
+        {
+          "turn": 3,
+          "chars": 33,
+          "limit": 30,
+          "pass": false
+        },
+        {
+          "turn": 5,
+          "chars": 21,
+          "limit": 30,
+          "pass": true
+        }
+      ]
+    }
+  ]
+}

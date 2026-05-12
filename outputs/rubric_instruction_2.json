@@ -1,0 +1,222 @@
+[
+  {
+    "id": "flow_1",
+    "dimension": "flow",
+    "description": "开场白是否确认对方是否为培训机构/校区负责人",
+    "weight": 2.0,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查对话开头Agent是否确认对方是负责人",
+    "hash": 1000000001
+  },
+  {
+    "id": "flow_2",
+    "dimension": "flow",
+    "description": "若对方不是负责人，是否请其转达后继续流程",
+    "weight": 2.0,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查若对方不是负责人，Agent是否请其转达",
+    "hash": 1000000002
+  },
+  {
+    "id": "flow_3",
+    "dimension": "flow",
+    "description": "Step 2: 是否询问对方是否知道后台已走低延迟线路",
+    "weight": 2.0,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查Agent是否询问是否知道后台走低延迟线路",
+    "hash": 1000000003
+  },
+  {
+    "id": "flow_4",
+    "dimension": "flow",
+    "description": "若对方不知情，是否说明前端未开放、临时开启低延迟是为保障音视频与白板同步",
+    "weight": 2.0,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查Agent是否解释临时开启低延迟的原因",
+    "hash": 1000000004
+  },
+  {
+    "id": "flow_5",
+    "dimension": "flow",
+    "description": "Step 3: 是否传达升级内容（发布页将分开显示两个选项）",
+    "weight": 2.0,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查Agent是否说发布页会分开显示两个选项",
+    "hash": 1000000005
+  },
+  {
+    "id": "flow_6",
+    "dimension": "flow",
+    "description": "是否说明标准直播和低延迟直播的区别（延迟、适用场景）",
+    "weight": 2.0,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查是否说明两种直播的延迟和适用场景",
+    "hash": 1000000006
+  },
+  {
+    "id": "flow_7",
+    "dimension": "flow",
+    "description": "Step 4: 是否询问对方通过什么方式发课",
+    "weight": 2.0,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查Agent是否询问Web控制台/校务系统A/SaaS系统B",
+    "hash": 1000000007
+  },
+  {
+    "id": "flow_8",
+    "dimension": "flow",
+    "description": "若低延迟直播未显示，是否引导开通",
+    "weight": 2.0,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查是否引导开通低延迟直播选项",
+    "hash": 1000000008
+  },
+  {
+    "id": "info_1",
+    "dimension": "info",
+    "description": "是否传达新增标准直播和低延迟直播两个独立选项",
+    "weight": 2.0,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查是否提到新增两个独立选项",
+    "hash": 1000001001
+  },
+  {
+    "id": "info_2",
+    "dimension": "info",
+    "description": "是否说明低延迟直播的延迟约1-2秒、互动更流畅、适合小班课/实操课",
+    "weight": 2.0,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查是否说明低延迟直播的特点",
+    "hash": 1000001002
+  },
+  {
+    "id": "info_3",
+    "dimension": "info",
+    "description": "是否说明标准直播费用较低、低延迟直播费用略高",
+    "weight": 2.0,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查是否说明价格差异",
+    "hash": 1000001003
+  },
+  {
+    "id": "constraint_1",
+    "dimension": "constraint",
+    "description": "每次回复是否控制在15-20个字以内",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": false,
+    "verification_hint": "检查Agent每次回复是否极简",
+    "hash": 1000002001
+  },
+  {
+    "id": "constraint_2",
+    "dimension": "constraint",
+    "description": "是否使用简短、自然的口语化表达",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查是否口语化、自然",
+    "hash": 1000002002
+  },
+  {
+    "id": "constraint_3",
+    "dimension": "constraint",
+    "description": "是否频繁给商家发言和提问的机会",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查Agent是否不独白，给商家发言机会",
+    "hash": 1000002003
+  },
+  {
+    "id": "constraint_4",
+    "dimension": "constraint",
+    "description": "是否不说好的、哈哈、嘿嘿、嘻嘻等语气词",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查是否不含禁用语气词",
+    "hash": 1000002004
+  },
+  {
+    "id": "constraint_5",
+    "dimension": "constraint",
+    "description": "是否不承诺给商家折扣券或优惠券",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查是否未承诺折扣券",
+    "hash": 1000002005
+  },
+  {
+    "id": "opening_1",
+    "dimension": "opening",
+    "description": "开场白是否确认对方是否为培训机构/校区负责人",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查开场白是否确认负责人身份",
+    "hash": 1000003001
+  },
+  {
+    "id": "task_1",
+    "dimension": "task",
+    "description": "核心任务是否完成：商家是否理解直播产品升级内容",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查商家是否理解升级内容",
+    "hash": 1000004001
+  },
+  {
+    "id": "task_2",
+    "dimension": "task",
+    "description": "是否确认商家前端低延迟直播选项是否可见",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查是否确认前端可见性",
+    "hash": 1000004002
+  },
+  {
+    "id": "task_3",
+    "dimension": "task",
+    "description": "是否检查学员端费用/加速线路费是否已适用低延迟直播",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查是否提醒确认费用适用",
+    "hash": 1000004003
+  },
+  {
+    "id": "task_4",
+    "dimension": "task",
+    "description": "是否尝试添加企业微信",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查是否提到企业微信添加",
+    "hash": 1000004004
+  },
+  {
+    "id": "task_5",
+    "dimension": "task",
+    "description": "对话是否在完成核心目标后正常结束",
+    "weight": 1.5,
+    "type": "semantic",
+    "evidence_required": true,
+    "verification_hint": "检查结尾是否有祝福语，是否正常结束",
+    "hash": 1000004005
+  }
+]
