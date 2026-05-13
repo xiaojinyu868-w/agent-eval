@@ -1,0 +1,120 @@
+{
+  "instruction_id": "1",
+  "source": "命题二：外呼任务对话模型指令示例 (1).xlsx",
+  "results": {
+    "dlg_00_cooperative": {
+      "overall": {
+        "mean": 0.3406862745098039,
+        "std": 0,
+        "bca_ci_95": [
+          0.3406862745098039,
+          0.3406862745098039
+        ],
+        "vals": [
+          0.3406862745098039
+        ]
+      },
+      "flow": {
+        "mean": 0.375,
+        "std": 0,
+        "bca_ci_95": [
+          0.375,
+          0.375
+        ],
+        "vals": [
+          0.375
+        ]
+      },
+      "info": {
+        "mean": 0.16666666666666666,
+        "std": 0,
+        "bca_ci_95": [
+          0.16666666666666666,
+          0.16666666666666666
+        ],
+        "vals": [
+          0.16666666666666666
+        ]
+      },
+      "constraint": {
+        "mean": 0.375,
+        "std": 0,
+        "bca_ci_95": [
+          0.375,
+          0.375
+        ],
+        "vals": [
+          0.375
+        ]
+      },
+      "opening": {
+        "mean": 0.5,
+        "std": 0,
+        "bca_ci_95": [
+          0.5,
+          0.5
+        ],
+        "vals": [
+          0.5
+        ]
+      },
+      "task": {
+        "mean": 0.3333333333333333,
+        "std": 0,
+        "bca_ci_95": [
+          0.3333333333333333,
+          0.3333333333333333
+        ],
+        "vals": [
+          0.3333333333333333
+        ]
+      },
+      "label": "dlg_00_cooperative",
+      "n_runs": 1,
+      "rubric_items": 20,
+      "stability_rate": 1.0
+    }
+  },
+  "cross_dialogue_stats": {},
+  "failure_analysis": {
+    "top_failures": [],
+    "unstable_items": [],
+    "lowest_dimensions": [
+      [
+        0.16666666666666666,
+        "dlg_00_cooperative",
+        "info"
+      ],
+      [
+        0.3333333333333333,
+        "dlg_00_cooperative",
+        "task"
+      ],
+      [
+        0.375,
+        "dlg_00_cooperative",
+        "constraint"
+      ],
+      [
+        0.375,
+        "dlg_00_cooperative",
+        "flow"
+      ],
+      [
+        0.5,
+        "dlg_00_cooperative",
+        "opening"
+      ]
+    ],
+    "simulation_quality": {
+      "dialogues": 1,
+      "avg_user_words": 11.166666666666666,
+      "avg_clarification_rate": 0.0,
+      "avg_pushback_rate": 0.0,
+      "early_termination_rate": 0.0,
+      "persona_consistency_rate": 1.0,
+      "simulator_quality_score": 1.0,
+      "quality_issues": []
+    }
+  }
+}

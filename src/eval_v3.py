@@ -455,61 +455,102 @@ RUBRIC_COMPILE_PROMPT = """你是一个评测标准编译器。将以下外呼�
 只输出JSON数组，不要其他文字。"""
 
 
-def compile_rubric(instruction: str) -> list[dict]:
-    """
-    Phase I: Rubric编译 — 从指令编译不可变检查清单
-    
-    灵感: RULERS Phase I — "Compile natural language rubric into immutable JSON bundle"
-    灵感: Rubric Is All You Need — QS rubric比generic rubric κ提升314%
-    
-    返回: 检查项列表，每个检查项有唯一ID、维度、binary判定标准
-    """
-    prompt = RUBRIC_COMPILE_PROMPT.format(instruction=instruction)
-    content = call_llm([{"role": "user", "content": prompt}], temperature=0.1, max_tokens=512, timeout=120)
-    
-    # 解析JSON
-    m = re.search(r'```(?:json)?\s*([\s\S]*?)```', content)
-    if m:
-        content = m.group(1)
-    m = re.search(r'\[[\s\S]*\]', content)
-    if m:
-        try:
-            items = json.loads(m.group())
-        except json.JSONDecodeError:
-            items = []
-    else:
-        items = []
-    
-    # 自动补全缺失字段
-    # 根据dimension推断weight: flow/info关键=2.0, 其他=1.5（与DIMENSION_WEIGHTS一致）
+def _extract_section(instruction: str, names: list[str]) -> str:
+    joined = "|".join(re.escape(n) for n in names)
+    pattern = rf'(?:^|\n)\s*#{{1,3}}\s*(?:{joined})\s*[:：]?\s*\n?(.*?)(?=\n\s*#{{1,3}}\s*[A-Za-z\u4e00-\u9fff].*?:?|\Z)'
+    m = re.search(pattern, instruction, re.DOTALL | re.IGNORECASE)
+    return m.group(1).strip() if m else ""
+
+
+def _section_lines(text: str, limit: int = 8) -> list[str]:
+    lines = []
+    for raw in text.splitlines():
+        line = raw.strip()
+        line = re.sub(r'^[-*]\s*', '', line)
+        line = re.sub(r'^\d+[\.、)]\s*', '', line)
+        line = re.sub(r'^#+\s*', '', line)
+        line = re.sub(r'\*\*([^*]+)\*\*', r'\1', line)
+        if not line or line.startswith('参考话术') or line.startswith('询问：'):
+            continue
+        if len(line) >= 4:
+            lines.append(line)
+    return lines[:limit]
+
+
+def _finalize_rubric_items(items: list[dict]) -> list[dict]:
     weight_map = {"flow": 2.0, "info": 2.0, "task": 1.5, "constraint": 1.5, "opening": 1.5}
+    dim_counts = {}
+    filtered = []
     for it in items:
         dim = it.get("dimension", "")
+        if dim not in weight_map:
+            continue
+        cnt = dim_counts.get(dim, 0)
+        if cnt >= 8:
+            continue
+        it.setdefault("id", f"{dim}_{cnt + 1}")
         it.setdefault("weight", weight_map.get(dim, 1.0))
         it.setdefault("type", "semantic")
         it.setdefault("evidence_required", True)
         it.setdefault("verification_hint", f"检查对话中是否: {it.get('description', '')}")
-    
-    # 所有项都是语义检查项（确定性检查由代码独立完成）
-    semantic_items = items
-    
-    # 限制检查项数量（每个维度最多8项，避免评测时间过长）
-    MAX_PER_DIM = 8
-    dim_counts = {}
-    filtered = []
-    for it in semantic_items:
-        dim = it.get("dimension", "")
-        cnt = dim_counts.get(dim, 0)
-        if cnt < MAX_PER_DIM:
-            filtered.append(it)
-            dim_counts[dim] = cnt + 1
-    semantic_items = filtered
-    
-    # 为每个检查项添加hash（确保不可变）
-    for it in semantic_items:
         it["hash"] = hash(json.dumps(it, sort_keys=True, ensure_ascii=False)) & 0xFFFFFFFF
-    
-    return semantic_items, []
+        filtered.append(it)
+        dim_counts[dim] = cnt + 1
+    return filtered
+
+
+def deterministic_compile_rubric(instruction: str) -> list[dict]:
+    """规则兜底Rubric编译器：保证无论LLM是否可用，都能得到可评测清单。"""
+    items = []
+
+    opening = _extract_section(instruction, ["Opening Line", "开场白"])
+    if opening:
+        items.append({"id": "opening_1", "dimension": "opening", "description": "开场白是否覆盖指令中的身份确认、来电目的和关键参数"})
+
+    task = _extract_section(instruction, ["Task", "任务", "目标"])
+    if task:
+        items.append({"id": "task_1", "dimension": "task", "description": f"是否完成核心任务：{task[:120]}"})
+        items.append({"id": "task_2", "dimension": "task", "description": "用户是否表现出已理解关键信息或下一步动作"})
+        items.append({"id": "task_3", "dimension": "task", "description": "任务完成后是否自然结束，且未因信息过载导致用户仓促中断"})
+
+    flow = _extract_section(instruction, ["Call Flow", "Conversation Flow", "流程要求", "对话流程"])
+    for i, line in enumerate(_section_lines(flow), 1):
+        items.append({"id": f"flow_{i}", "dimension": "flow", "description": f"是否按流程执行：{line}"})
+
+    knowledge = _extract_section(instruction, ["Knowledge Points", "FAQ", "知识点", "背景"])
+    for i, line in enumerate(_section_lines(knowledge), 1):
+        items.append({"id": f"info_{i}", "dimension": "info", "description": f"是否准确传达信息点：{line}"})
+
+    constraints = _extract_section(instruction, ["Constraints", "约束"])
+    for i, line in enumerate(_section_lines(constraints), 1):
+        items.append({"id": f"constraint_{i}", "dimension": "constraint", "description": f"是否遵循约束：{line}"})
+
+    return _finalize_rubric_items(items)
+
+
+def compile_rubric(instruction: str) -> list[dict]:
+    """
+    Phase I: Rubric编译 — 优先LLM编译，失败时规则兜底。
+    """
+    items = []
+    try:
+        prompt = RUBRIC_COMPILE_PROMPT.format(instruction=instruction)
+        content = call_llm([{"role": "user", "content": prompt}], temperature=0.1, max_tokens=1536, timeout=60)
+        m = re.search(r'```(?:json)?\s*([\s\S]*?)```', content)
+        if m:
+            content = m.group(1)
+        m = re.search(r'\[[\s\S]*\]', content)
+        if m:
+            items = json.loads(m.group())
+    except Exception as e:
+        print(f"  Rubric LLM编译失败，使用规则兜底: {e}")
+        items = []
+
+    items = _finalize_rubric_items(items)
+    if not items:
+        items = deterministic_compile_rubric(instruction)
+        print(f"  Rubric规则兜底生成: {len(items)} 项")
+    return items, []
 
 
 # ============================================================

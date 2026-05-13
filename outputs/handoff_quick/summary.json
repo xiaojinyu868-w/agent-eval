@@ -1,0 +1,22 @@
+{
+  "tasks": [
+    {
+      "instruction_id": "1",
+      "source": "命题二：外呼任务对话模型指令示例 (1).xlsx",
+      "n_dialogues": 1,
+      "avg_score": 0.3406862745098039,
+      "avg_stability": null,
+      "report": "outputs/handoff_quick/instruction_1/report.md",
+      "results": "outputs/handoff_quick/instruction_1/results.json"
+    },
+    {
+      "instruction_id": "2",
+      "source": "命题二：外呼任务对话模型指令示例 (1).xlsx",
+      "n_dialogues": 1,
+      "avg_score": 0.3153846153846154,
+      "avg_stability": null,
+      "report": "outputs/handoff_quick/instruction_2/report.md",
+      "results": "outputs/handoff_quick/instruction_2/results.json"
+    }
+  ]
+}
