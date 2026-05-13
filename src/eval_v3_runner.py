@@ -32,9 +32,113 @@ from user_simulator_v2 import (
     simulate_dialogue, generate_diverse_dialogues,
     PRESET_PERSONAS, PersonaConfig, generate_random_persona,
 )
+from instruction_loader import load_instruction_records, filter_instruction_records
 
 
-def run_full_evaluation(instruction: str, dialogues: list[dict], n_runs: int = 5):
+def safe_slug(text: str) -> str:
+    return "".join(ch if ch.isalnum() or ch in ("-", "_") else "_" for ch in str(text))[:80] or "task"
+
+
+def normalize_dialogue_payload(data, fallback_instruction: str):
+    """兼容 v1 list、v2 dict、单条 dialogue dict 三种历史格式。"""
+    if isinstance(data, list):
+        return fallback_instruction, data
+    if not isinstance(data, dict):
+        return fallback_instruction, []
+    instruction = data.get("instruction", fallback_instruction)
+    if isinstance(data.get("dialogues"), list):
+        return instruction, data["dialogues"]
+    if isinstance(data.get("dialogue"), list):
+        return instruction, [{
+            "persona": data.get("persona", {}),
+            "persona_type": data.get("persona_type", data.get("persona", "loaded")),
+            "dialogue": data["dialogue"],
+            "behavior_metrics": data.get("behavior_metrics", {}),
+            "persona_consistency": data.get("persona_consistency", {}),
+            "simulator_quality": data.get("simulator_quality", {}),
+        }]
+    return instruction, []
+
+
+def summarize_simulation_quality(dialogues: list[dict]) -> dict:
+    metrics = [d.get("behavior_metrics", {}) for d in dialogues if d.get("behavior_metrics")]
+    qualities = [d.get("simulator_quality", {}) for d in dialogues if d.get("simulator_quality")]
+    consistencies = [d.get("persona_consistency", {}) for d in dialogues if d.get("persona_consistency")]
+    if not dialogues:
+        return {}
+    return {
+        "dialogues": len(dialogues),
+        "avg_user_words": mean([m.get("avg_words_per_turn", 0) for m in metrics]) if metrics else 0,
+        "avg_clarification_rate": mean([m.get("clarification_rate", 0) for m in metrics]) if metrics else 0,
+        "avg_pushback_rate": mean([m.get("pushback_rate", 0) for m in metrics]) if metrics else 0,
+        "early_termination_rate": mean([1.0 if m.get("early_termination") else 0.0 for m in metrics]) if metrics else 0,
+        "persona_consistency_rate": mean([1.0 if c.get("consistent", True) else 0.0 for c in consistencies]) if consistencies else 1.0,
+        "simulator_quality_score": mean([q.get("score", 1.0) for q in qualities]) if qualities else 1.0,
+        "quality_issues": [issue for q in qualities for issue in q.get("issues", [])][:12],
+    }
+
+
+def analyze_failure_modes(results: dict, dialogues: list[dict]) -> dict:
+    """从逐项判定中提取可落地的失败原因、证据和改进建议。"""
+    failures = []
+    unstable = []
+    for did, result in results.items():
+        item_votes = {}
+        for run in result.get("run_details", []):
+            for j in run.get("judgments", []):
+                iid = j.get("item_id", "")
+                item_votes.setdefault(iid, {"dialogue_id": did, "dimension": j.get("dimension"), "description": j.get("description", ""), "verdicts": [], "evidence": [], "reasons": []})
+                item_votes[iid]["verdicts"].append(j.get("verdict"))
+                if j.get("evidence") and j.get("evidence") != "未找到相关对话":
+                    item_votes[iid]["evidence"].append(j.get("evidence"))
+                if j.get("reason"):
+                    item_votes[iid]["reasons"].append(j.get("reason"))
+        for iid, info in item_votes.items():
+            verdicts = info["verdicts"]
+            if not verdicts:
+                continue
+            fail_rate = sum(1 for v in verdicts if v in ("NO", "PARTIAL")) / len(verdicts)
+            if fail_rate > 0:
+                failures.append({
+                    "dialogue_id": info["dialogue_id"],
+                    "item_id": iid,
+                    "dimension": info["dimension"],
+                    "description": info["description"],
+                    "fail_rate": fail_rate,
+                    "verdicts": verdicts,
+                    "evidence": info["evidence"][:2],
+                    "reason": info["reasons"][0] if info["reasons"] else "",
+                })
+            if len(set(verdicts)) > 1:
+                unstable.append({"dialogue_id": info["dialogue_id"], "item_id": iid, "description": info["description"], "verdicts": verdicts})
+    failures.sort(key=lambda x: (-x["fail_rate"], x["dimension"] or "", x["item_id"]))
+    low_dimensions = []
+    for did, result in results.items():
+        for dim_key in DIMENSION_WEIGHTS:
+            val = result.get(dim_key, {}).get("mean")
+            if isinstance(val, (int, float)):
+                low_dimensions.append((val, did, dim_key))
+    low_dimensions.sort()
+    return {
+        "top_failures": failures[:12],
+        "unstable_items": unstable[:8],
+        "lowest_dimensions": low_dimensions[:8],
+        "simulation_quality": summarize_simulation_quality(dialogues),
+    }
+
+
+def recommendation_for_dimension(dim_key: str) -> str:
+    mapping = {
+        "flow": "把指令流程编译成状态机，要求模型每轮只推进一步，并显式等待用户反馈。",
+        "info": "将知识点拆成必说/条件触发/FAQ 三层，避免一次性信息倾倒。",
+        "constraint": "把字数、禁用词、忙/开车等硬约束放入解码前检查或后处理拦截。",
+        "opening": "开场白使用模板化变量填充，并用确定性覆盖率检查兜底。",
+        "task": "增加用户理解确认环节，不只检查 Agent 说出信息，还检查用户是否接收。",
+    }
+    return mapping.get(dim_key, "补充针对该失败项的专门测试用例，并将其加入回归集。")
+
+
+def run_full_evaluation(instruction: str, dialogues: list[dict], n_runs: int = 5, output_dir: str = None, report_name: str = "eval_v3_report.txt"):
     """
     完整评测流程
     
@@ -88,7 +192,7 @@ def run_full_evaluation(instruction: str, dialogues: list[dict], n_runs: int = 5
     cross_dialogue_stats = compute_cross_dialogue_stats(results)
     
     # Step 3: 生成报告
-    report = generate_report(instruction, results, cross_dialogue_stats, dialogues)
+    report = generate_report(instruction, results, cross_dialogue_stats, dialogues, output_dir=output_dir, report_name=report_name)
     
     return results, cross_dialogue_stats, report
 
@@ -170,7 +274,7 @@ def compute_cross_dialogue_stats(results: dict) -> dict:
     }
 
 
-def generate_report(instruction: str, results: dict, cross_stats: dict, dialogues: list) -> str:
+def generate_report(instruction: str, results: dict, cross_stats: dict, dialogues: list, output_dir: str = None, report_name: str = "eval_v3_report.txt") -> str:
     """
     生成可解释、可量化的评测报告
     
@@ -203,6 +307,10 @@ def generate_report(instruction: str, results: dict, cross_stats: dict, dialogue
     lines.append("     - Gwet's AC1(比Cohen's Kappa抗悖论)")
     lines.append("     - Krippendorff's α(支持多评价者+有序尺度)")
     lines.append("")
+    lines.append("【核心洞察】")
+    lines.append("  复杂外呼指令失败通常不是单点知识遗漏，而是流程推进、用户打断、信息分步传达和硬约束共同作用的系统性失败。")
+    lines.append("  本系统把自然语言指令先编译为冻结Rubric，再用多样化Persona做压力测试，最后输出可直接回流到模型/Prompt改进的失败项。")
+    lines.append("")
     
     # 2. 评测概况
     lines.append("【评测概况】")
@@ -213,7 +321,18 @@ def generate_report(instruction: str, results: dict, cross_stats: dict, dialogue
         lines.append(f"  判定者间一致 Gwet's AC1: {cross_stats.get('avg_gwet_ac1', 'N/A')}")
         lines.append(f"  多评价者一致 Krippendorff's α: {cross_stats.get('avg_krippendorff_alpha', 'N/A')}")
         lines.append(f"  逐项判定稳定性: {cross_stats.get('avg_stability', 'N/A')}")
-    lines.append("")
+    sim_quality = summarize_simulation_quality(dialogues)
+    if sim_quality:
+        lines.append("【用户模拟器质量】")
+        lines.append(f"  平均用户回复长度: {sim_quality.get('avg_user_words', 0):.1f}字")
+        lines.append(f"  追问率: {sim_quality.get('avg_clarification_rate', 0):.1%}")
+        lines.append(f"  抵触率: {sim_quality.get('avg_pushback_rate', 0):.1%}")
+        lines.append(f"  提前结束率: {sim_quality.get('early_termination_rate', 0):.1%}")
+        lines.append(f"  Persona一致性: {sim_quality.get('persona_consistency_rate', 1):.1%}")
+        lines.append(f"  模拟器质量分: {sim_quality.get('simulator_quality_score', 1):.3f}")
+        for issue in sim_quality.get("quality_issues", [])[:5]:
+            lines.append(f"  - 质量提示: {issue}")
+        lines.append("")
     
     # 3. 总分排名
     lines.append("【总分排名】")
@@ -261,7 +380,33 @@ def generate_report(instruction: str, results: dict, cross_stats: dict, dialogue
             lines.append(f"  {dim_name:<20} {stats['mean']:>6.3f} {stats['std']:>6.3f} {stats['min']:>6.3f} {stats['max']:>6.3f}")
         lines.append("")
     
-    # 6. 方法论声明
+    # 6. 失败诊断与改进建议
+    failure_analysis = analyze_failure_modes(results, dialogues)
+    if failure_analysis:
+        lines.append("【失败诊断 Top Cases】")
+        for f in failure_analysis.get("top_failures", [])[:8]:
+            dim_name = DIMENSION_NAMES.get(f.get("dimension"), f.get("dimension"))
+            lines.append(f"  - [{f.get('dialogue_id')}] {dim_name}/{f.get('item_id')} 失败率={f.get('fail_rate', 0):.0%}")
+            lines.append(f"    检查项: {f.get('description', '')}")
+            if f.get("evidence"):
+                lines.append(f"    证据: {f['evidence'][0]}")
+            if f.get("reason"):
+                lines.append(f"    原因: {f.get('reason', '')[:160]}")
+            lines.append(f"    建议: {recommendation_for_dimension(f.get('dimension'))}")
+        lines.append("")
+        if failure_analysis.get("unstable_items"):
+            lines.append("【评测不稳定项】")
+            for u in failure_analysis["unstable_items"][:5]:
+                lines.append(f"  - [{u['dialogue_id']}] {u['item_id']}: {'/'.join(u['verdicts'])} — {u['description']}")
+            lines.append("  这些项建议优先人工抽检，用于校准 Rubric 或补充判定示例。")
+            lines.append("")
+        if failure_analysis.get("lowest_dimensions"):
+            lines.append("【瓶颈维度】")
+            for val, did, dim_key in failure_analysis["lowest_dimensions"][:5]:
+                lines.append(f"  - {did} / {DIMENSION_NAMES.get(dim_key, dim_key)} = {val:.3f}: {recommendation_for_dimension(dim_key)}")
+            lines.append("")
+    
+    # 7. 方法论声明
     lines.append("【方法论声明】")
     lines.append("  本评测系统遵循以下科学原则:")
     lines.append("  1. LLM评分不是黄金标准 — 多次评测取统计量")
@@ -279,9 +424,9 @@ def generate_report(instruction: str, results: dict, cross_stats: dict, dialogue
     report_text = "\n".join(lines)
     
     # 保存报告
-    output_dir = os.path.join(os.path.dirname(__file__), "..", "outputs")
+    output_dir = output_dir or os.path.join(os.path.dirname(__file__), "..", "outputs")
     os.makedirs(output_dir, exist_ok=True)
-    report_path = os.path.join(output_dir, "eval_v3_report.txt")
+    report_path = os.path.join(output_dir, report_name)
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(report_text)
     print(f"\n报告已保存: {report_path}")
@@ -327,54 +472,66 @@ INSTRUCTION = """# Role
 if __name__ == "__main__":
     import argparse
     
-    parser = argparse.ArgumentParser(description="评测系统 v3 完整运行")
+    parser = argparse.ArgumentParser(description="复杂指令下的多轮对话自动评测系统")
+    parser.add_argument("--instruction-file", type=str, default=None,
+                        help="任务指令文件，支持 .xlsx/.txt/.json；不传则使用内置示例")
+    parser.add_argument("--instruction-id", type=str, default=None,
+                        help="只评测指定任务ID，多个ID用逗号分隔")
     parser.add_argument("--dialogues", type=str, default=None,
-                        help="对话数据文件路径 (JSON)")
+                        help="复用已有对话数据文件(JSON)，通常只用于单任务调试")
     parser.add_argument("--n-runs", type=int, default=5,
                         help="每条对话评测次数 (默认5)")
     parser.add_argument("--n-dialogues", type=int, default=8,
-                        help="生成的对话数 (默认8)")
+                        help="每个任务生成的对话数 (默认8)")
     parser.add_argument("--skip-generate", action="store_true",
-                        help="跳过对话生成，使用已有对话数据")
+                        help="跳过对话生成，使用 outputs/simulated_dialogues_v2.json 或 v1 历史文件")
+    parser.add_argument("--output-dir", type=str, default=None,
+                        help="输出目录，默认 outputs/hackathon_run")
     args = parser.parse_args()
-    
-    # Step 1: 加载或生成对话
-    if args.dialogues and os.path.exists(args.dialogues):
-        with open(args.dialogues, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        instruction = data.get("instruction", INSTRUCTION)
-        dialogues = data.get("dialogues", [])
-        print(f"从文件加载 {len(dialogues)} 条对话: {args.dialogues}")
-    elif args.skip_generate:
-        # 使用之前生成的对话
-        v2_path = os.path.join(os.path.dirname(__file__), "..", "outputs", "simulated_dialogues_v2.json")
-        v1_path = os.path.join(os.path.dirname(__file__), "..", "outputs", "simulated_dialogues.json")
-        if os.path.exists(v2_path):
-            with open(v2_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            instruction = data.get("instruction", INSTRUCTION)
-            dialogues = data.get("dialogues", [])
-            print(f"从v2对话加载 {len(dialogues)} 条对话")
-        elif os.path.exists(v1_path):
-            with open(v1_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            instruction = data.get("instruction", INSTRUCTION)
-            dialogues = data.get("dialogues", [])
-            print(f"从v1对话加载 {len(dialogues)} 条对话")
+
+    base_output_dir = args.output_dir or os.path.join(os.path.dirname(__file__), "..", "outputs", "hackathon_run")
+    os.makedirs(base_output_dir, exist_ok=True)
+
+    records = load_instruction_records(args.instruction_file, default_instruction=INSTRUCTION)
+    records = filter_instruction_records(records, args.instruction_id)
+    if not records:
+        raise SystemExit("未找到可评测的任务指令")
+
+    all_task_summaries = []
+    for record in records:
+        task_id = safe_slug(record.get("id", "task"))
+        task_output_dir = os.path.join(base_output_dir, f"instruction_{task_id}")
+        os.makedirs(task_output_dir, exist_ok=True)
+        instruction = record.get("instruction", INSTRUCTION)
+
+        print("\n" + "#" * 80)
+        print(f"任务 {record.get('id')} | 来源: {record.get('source', 'unknown')}")
+        print("#" * 80)
+
+        if args.dialogues and os.path.exists(args.dialogues):
+            with open(args.dialogues, "r", encoding="utf-8") as f:
+                loaded = json.load(f)
+            instruction, dialogues = normalize_dialogue_payload(loaded, instruction)
+            print(f"从文件加载 {len(dialogues)} 条对话: {args.dialogues}")
+        elif args.skip_generate:
+            v2_path = os.path.join(os.path.dirname(__file__), "..", "outputs", "simulated_dialogues_v2.json")
+            v1_path = os.path.join(os.path.dirname(__file__), "..", "outputs", "simulated_dialogues.json")
+            load_path = v2_path if os.path.exists(v2_path) else v1_path
+            if os.path.exists(load_path):
+                with open(load_path, "r", encoding="utf-8") as f:
+                    loaded = json.load(f)
+                instruction, dialogues = normalize_dialogue_payload(loaded, instruction)
+                print(f"复用历史对话 {len(dialogues)} 条: {load_path}")
+            else:
+                print("未找到历史对话，将生成新对话")
+                dialogues = generate_diverse_dialogues(instruction, n_dialogues=args.n_dialogues)
         else:
-            print("未找到对话数据文件，将生成新对话")
-            dialogues_data = generate_diverse_dialogues(instruction, n_dialogues=args.n_dialogues)
-            dialogues = dialogues_data
-    else:
-        # 生成新对话
-        print(f"生成 {args.n_dialogues} 条多样化对话...")
-        dialogues = generate_diverse_dialogues(INSTRUCTION, n_dialogues=args.n_dialogues)
-        instruction = INSTRUCTION
-        
-        # 保存生成的对话
-        output_dir = os.path.join(os.path.dirname(__file__), "..", "outputs")
-        os.makedirs(output_dir, exist_ok=True)
-        save_data = {
+            print(f"生成 {args.n_dialogues} 条多样化对话...")
+            dialogues = generate_diverse_dialogues(instruction, n_dialogues=args.n_dialogues)
+
+        dialogue_bundle = {
+            "instruction_id": record.get("id"),
+            "source": record.get("source"),
             "instruction": instruction,
             "dialogues": [{
                 "persona": d.get("persona", {}),
@@ -382,31 +539,43 @@ if __name__ == "__main__":
                 "dialogue": d.get("dialogue", []),
                 "behavior_metrics": d.get("behavior_metrics", {}),
                 "persona_consistency": d.get("persona_consistency", {}),
+                "simulator_quality": d.get("simulator_quality", {}),
             } for d in dialogues],
         }
-        save_path = os.path.join(output_dir, "simulated_dialogues_v2.json")
-        with open(save_path, "w", encoding="utf-8") as f:
-            json.dump(save_data, f, ensure_ascii=False, indent=2)
-        print(f"对话数据已保存: {save_path}")
-    
-    # Step 2: 运行完整评测
-    results, cross_stats, report = run_full_evaluation(
-        instruction, dialogues, n_runs=args.n_runs
-    )
-    
-    # Step 3: 保存完整结果
-    output_dir = os.path.join(os.path.dirname(__file__), "..", "outputs")
-    os.makedirs(output_dir, exist_ok=True)
-    
-    # 保存精简结果（去掉run_details避免文件过大）
-    save_results = {}
-    for did, r in results.items():
-        save_results[did] = {k: v for k, v in r.items() if k not in ("run_details", "det_checks")}
-    
-    output_path = os.path.join(output_dir, "eval_v3_full_results.json")
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump({
-            "results": save_results,
-            "cross_dialogue_stats": {k: v for k, v in cross_stats.items() if k != "ranking"},
-        }, f, ensure_ascii=False, indent=2)
-    print(f"\n完整结果已保存: {output_path}")
+        dialogue_path = os.path.join(task_output_dir, "dialogues.json")
+        with open(dialogue_path, "w", encoding="utf-8") as f:
+            json.dump(dialogue_bundle, f, ensure_ascii=False, indent=2)
+        print(f"对话数据已保存: {dialogue_path}")
+
+        results, cross_stats, report = run_full_evaluation(
+            instruction, dialogues, n_runs=args.n_runs,
+            output_dir=task_output_dir,
+            report_name="report.md",
+        )
+
+        save_results = {did: {k: v for k, v in r.items() if k not in ("run_details", "det_checks")} for did, r in results.items()}
+        full_results_path = os.path.join(task_output_dir, "results.json")
+        with open(full_results_path, "w", encoding="utf-8") as f:
+            json.dump({
+                "instruction_id": record.get("id"),
+                "source": record.get("source"),
+                "results": save_results,
+                "cross_dialogue_stats": {k: v for k, v in cross_stats.items() if k != "ranking"},
+                "failure_analysis": analyze_failure_modes(results, dialogues),
+            }, f, ensure_ascii=False, indent=2)
+        print(f"完整结果已保存: {full_results_path}")
+
+        all_task_summaries.append({
+            "instruction_id": record.get("id"),
+            "source": record.get("source"),
+            "n_dialogues": len(dialogues),
+            "avg_score": mean([r.get("overall", {}).get("mean", 0) for r in results.values()]) if results else 0,
+            "avg_stability": cross_stats.get("avg_stability"),
+            "report": os.path.join(task_output_dir, "report.md"),
+            "results": full_results_path,
+        })
+
+    index_path = os.path.join(base_output_dir, "summary.json")
+    with open(index_path, "w", encoding="utf-8") as f:
+        json.dump({"tasks": all_task_summaries}, f, ensure_ascii=False, indent=2)
+    print(f"\n批量评测完成，索引已保存: {index_path}")

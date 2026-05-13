@@ -562,29 +562,46 @@ JUDGE_ITEM_PROMPT_GRM = """你是一个严苛的对话质量评测官 (Generativ
 JUDGE_ITEM_PROMPT = JUDGE_ITEM_PROMPT_GRM  # 使用 GRM 风格
 
 
-    Parse GRM-style output: <think> + <verdict> + <score>
-    Returns: {"reasoning": ..., "verdict": ..., "score": ..., "evidence": ..., "evidence_turn": ...}
+def parse_grm_output(content: str) -> dict:
     """
-    import re
-    # Extract <think> reasoning
-    thinking = re.search(r'<think>(.+?)</think>', content, re.DOTALL)
+    解析 GRM/XML 或 JSON 风格输出，统一返回判定字段。
+    """
+    content = content or ""
+    thinking = re.search(r'<think>(.+?)</think>', content, re.DOTALL | re.IGNORECASE)
     reasoning = thinking.group(1).strip() if thinking else ""
-    
-    # Extract <verdict>
-    verdict_match = re.search(r'<verdict>(YES|PARTIAL|NO|N/A)</verdict>', content, re.IGNORECASE)
-    verdict = verdict_match.group(1).upper() if verdict_match else "NO"
-    
-    # Extract <score>
-    score_match = re.search(r'<score>(1\.0|0\.5|0\.0|N/A)</score>', content, re.IGNORECASE)
-    score = score_match.group(1) if score_match else "0.0"
-    
-    # Extract evidence (if present)
-    evidence_match = re.search(r'<evidence>([^<]+)</evidence>', content, re.IGNORECASE)
+
+    verdict_match = re.search(r'<verdict>\s*(YES|PARTIAL|NO|N/A)\s*</verdict>', content, re.IGNORECASE)
+    verdict = verdict_match.group(1).upper() if verdict_match else None
+
+    score_match = re.search(r'<score>\s*(1(?:\.0)?|0\.5|0(?:\.0)?|N/A|null)\s*</score>', content, re.IGNORECASE)
+    score = score_match.group(1).upper() if score_match else None
+
+    evidence_match = re.search(r'<evidence>(.*?)</evidence>', content, re.DOTALL | re.IGNORECASE)
     evidence = evidence_match.group(1).strip() if evidence_match else ""
-    
-    evidence_turn_match = re.search(r'<evidence_turn>(\d+)</evidence_turn>', content, re.IGNORECASE)
+
+    evidence_turn_match = re.search(r'<evidence_turn>\s*(\d+)\s*</evidence_turn>', content, re.IGNORECASE)
     evidence_turn = int(evidence_turn_match.group(1)) if evidence_turn_match else None
-    
+
+    if verdict is None:
+        json_parsed = parse_json_from_llm(content)
+        if json_parsed:
+            reasoning = json_parsed.get("reasoning") or json_parsed.get("reason") or reasoning
+            verdict = str(json_parsed.get("verdict", "NO")).upper()
+            raw_score = json_parsed.get("score")
+            if raw_score is None and verdict in ("YES", "PARTIAL", "NO", "N/A"):
+                raw_score = {"YES": 1.0, "PARTIAL": 0.5, "NO": 0.0, "N/A": "N/A"}[verdict]
+            score = str(raw_score).upper() if raw_score is not None else score
+            evidence = json_parsed.get("evidence", evidence)
+            evidence_turn = json_parsed.get("evidence_turn", evidence_turn)
+
+    verdict = verdict if verdict in ("YES", "PARTIAL", "NO", "N/A") else "NO"
+    if score in (None, "NULL"):
+        score = "N/A" if verdict == "N/A" else {"YES": "1.0", "PARTIAL": "0.5", "NO": "0.0"}.get(verdict, "0.0")
+    elif score == "1":
+        score = "1.0"
+    elif score == "0":
+        score = "0.0"
+
     return {
         "reasoning": reasoning,
         "verdict": verdict,
@@ -635,6 +652,7 @@ def judge_single_item(item: dict, instruction: str, dialogue: list[dict]) -> dic
         "verdict": parsed["verdict"],
         "score": float(parsed["score"]) if parsed["score"] not in ["N/A", None] else None,
         "reasoning": parsed["reasoning"],
+        "reason": parsed["reasoning"],
         "evidence": parsed["evidence"],
         "evidence_turn": parsed["evidence_turn"],
         "type": item.get("type", "semantic"),
@@ -1021,6 +1039,7 @@ def agent_evaluate(instruction: str, dialogue: list[dict], n_runs: int = 5, labe
                     "verdict": "NO",
                     "evidence": "",
                     "reason": f"评测异常: {str(e)}",
+                    "reasoning": f"评测异常: {str(e)}",
                     "score": 0.0,
                     "evidence_valid": False,
                 })
@@ -1218,6 +1237,7 @@ def compute_statistics(all_run_results: list, rubric_items: list, det_results: l
                 "deterministic": det_constraint_rate,
                 "llm": llm_constraint,
                 "bias": bias,
+                "direction": "偏宽容" if bias > 0.05 else "偏严格" if bias < -0.05 else "基本一致",
                 "note": note,
             }
     
@@ -1252,10 +1272,13 @@ def compute_statistics(all_run_results: list, rubric_items: list, det_results: l
             "judgments": [{
                 "item_id": j["item_id"],
                 "dimension": j["dimension"],
+                "description": j.get("description", ""),
                 "verdict": j["verdict"],
-                "evidence": j["evidence"],
+                "score": j.get("score"),
+                "evidence": j.get("evidence", ""),
+                "evidence_turn": j.get("evidence_turn"),
                 "evidence_valid": j.get("evidence_valid", False),
-                "reason": j["reason"],
+                "reason": j.get("reason") or j.get("reasoning", ""),
             } for j in r["judgments"]],
         }
         results_summary["run_details"].append(run_detail)

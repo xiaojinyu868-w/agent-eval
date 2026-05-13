@@ -305,6 +305,62 @@ def build_agent_system_prompt(instruction: str) -> str:
 只输出你的回复内容，不要加引号、不要加角色标记。"""
 
 
+def sanitize_user_reply(text: str) -> tuple[str, list[str]]:
+    """清理模拟用户输出中的元评论和非口语化残留。"""
+    issues = []
+    raw = (text or "").strip().strip('"').strip()
+    meta_patterns = [
+        "用户说", "作为用户", "我需要", "我会", "我的角色", "对方说",
+        "真实用户", "思考", "分析", "回复应该", "我作为", "接下来",
+    ]
+    if any(p in raw for p in meta_patterns):
+        issues.append("检测到元评论残留")
+    lines = [ln.strip() for ln in raw.splitlines() if ln.strip()]
+    candidate = lines[-1] if lines else raw
+    for sep in ["：", ":"]:
+        if sep in candidate and any(candidate.startswith(p) for p in ["用户", "我", "回复", "自然回复"]):
+            candidate = candidate.split(sep, 1)[1].strip()
+    candidate = re.sub(r'^(用户说|用户|我|回复|自然回复)[：:：\s]*', '', candidate).strip()
+    candidate = re.sub(r'["“”]', '', candidate).strip()
+    if any(p in candidate for p in meta_patterns):
+        candidate = re.split(r'[。！？!?]\s*', candidate)[-1].strip() or candidate
+    if len(candidate) > 50:
+        issues.append("用户回复过长，已截断")
+        candidate = candidate[:50].rstrip('，。、；; ') + '...'
+    if not candidate:
+        candidate = "嗯"
+        issues.append("空回复兜底")
+    return candidate, issues
+
+
+def simulator_quality_checks(dialogue: list[dict], persona: PersonaConfig, behavior_metrics: dict,
+                             consistency: dict, sanitation_issues: list[dict]) -> dict:
+    """输出用户模拟器自检结果，避免把不真实样本混入评测。"""
+    issues = []
+    user_turns = [d for d in dialogue if d["role"] == "user"]
+    meta_patterns = ["用户说", "作为用户", "我需要", "真实用户", "思考", "分析"]
+    for d in user_turns:
+        if any(p in d["content"] for p in meta_patterns):
+            issues.append(f"第{d.get('turn')}轮疑似元评论: {d['content'][:30]}")
+    if behavior_metrics.get("max_words_per_turn", 0) > 60:
+        issues.append("用户单轮回复过长，真实性偏低")
+    if persona.receptivity < 0.3 and behavior_metrics.get("pushback_rate", 0) == 0:
+        issues.append("低接受度 persona 未表现出抵触")
+    if persona.sophistication < 0.3 and behavior_metrics.get("clarification_rate", 0) == 0:
+        issues.append("低理解力 persona 未出现追问/澄清")
+    if not consistency.get("consistent", True):
+        issues.extend(consistency.get("issues", []))
+    issues.extend(i.get("issue", "") for i in sanitation_issues if i.get("issue"))
+    unique_issues = list(dict.fromkeys(issues))
+    score = max(0.0, 1.0 - 0.15 * len(unique_issues))
+    return {
+        "score": score,
+        "passed": score >= 0.7,
+        "issues": unique_issues,
+        "sanitized_turns": len(sanitation_issues),
+    }
+
+
 def compute_behavior_metrics(dialogue: list[dict]) -> dict:
     """
     计算行为度量指标 — USI风格
@@ -446,6 +502,7 @@ def simulate_dialogue(instruction: str, persona: PersonaConfig = None, persona_t
     # 交替对话
     user_messages = [{"role": "system", "content": user_system}]
     agent_messages = [{"role": "system", "content": agent_system}]
+    sanitation_issues = []
     
     for turn in range(2, max_turns + 1):
         last_msg = dialogue[-1]["content"]
@@ -455,19 +512,13 @@ def simulate_dialogue(instruction: str, persona: PersonaConfig = None, persona_t
             # 用户回复
             user_messages.append({"role": "user", "content": f"对方说: {last_msg}\n\n你的回复:"})
             try:
-                user_reply = call_llm(user_messages, max_tokens=200, temperature=0.7)
-                user_reply = user_reply.strip().strip('"').strip()
-                # 清理元评论：只取第一行自然回复
-                user_reply = user_reply.split('\n')[0].strip()
-                # 去掉常见的元评论前缀
-                for prefix in ['用户说：', '用户:', '我:', '作为用户', '我需要', '对方说']:
-                    if user_reply.startswith(prefix):
-                        user_reply = user_reply[len(prefix):].strip()
-                # 如果回复太长(>50字)，截断（真实用户不说长篇大论）
-                if len(user_reply) > 50:
-                    user_reply = user_reply[:50].rstrip('，。、') + '...'
+                raw_reply = call_llm(user_messages, max_tokens=200, temperature=0.7)
+                user_reply, issues = sanitize_user_reply(raw_reply)
+                for issue in issues:
+                    sanitation_issues.append({"turn": turn, "issue": issue, "raw": raw_reply[:120]})
             except Exception:
                 user_reply = "嗯"
+                sanitation_issues.append({"turn": turn, "issue": "LLM调用失败兜底", "raw": ""})
             user_messages.append({"role": "assistant", "content": user_reply})
             dialogue.append({"role": "user", "content": user_reply, "turn": turn})
         else:
@@ -501,12 +552,14 @@ def simulate_dialogue(instruction: str, persona: PersonaConfig = None, persona_t
     
     # Persona一致性验证
     consistency = verify_persona_consistency(dialogue, persona, agent_role)
+    quality = simulator_quality_checks(dialogue, persona, behavior_metrics, consistency, sanitation_issues)
     
     result = {
         "dialogue": dialogue,
         "persona": persona.to_dict(),
         "behavior_metrics": behavior_metrics,
         "persona_consistency": consistency,
+        "simulator_quality": quality,
     }
     
     if verbose:
@@ -518,6 +571,8 @@ def simulate_dialogue(instruction: str, persona: PersonaConfig = None, persona_t
               f"反驳率={behavior_metrics.get('pushback_rate', 0):.0%}")
         if not consistency["consistent"]:
             print(f"  ⚠️ Persona一致性问题: {consistency['issues']}")
+        if not quality["passed"]:
+            print(f"  ⚠️ 模拟器质量问题: {quality['issues']}")
     
     return result
 
@@ -534,7 +589,7 @@ def generate_diverse_dialogues(instruction: str, n_dialogues: int = 8,
     results = []
     
     if include_presets:
-        preset_keys = list(PRESET_PERSONAS.keys())
+        preset_keys = list(PRESET_PERSONAS.keys())[:n_dialogues]
         print(f"使用 {len(preset_keys)} 个预设Persona + 随机生成 {max(0, n_dialogues - len(preset_keys))} 个")
         
         for key in preset_keys:
@@ -637,9 +692,11 @@ if __name__ == "__main__":
             "persona": d["persona"],
             "persona_type": d.get("persona_type", "unknown"),
             "dialogue": d["dialogue"],
-            "behavior_metrics": d.get("behavior_metrics", {}),
-            "persona_consistency": d.get("persona_consistency", {}),
-        } for d in dialogues],
+                "behavior_metrics": d.get("behavior_metrics", {}),
+                "persona_consistency": d.get("persona_consistency", {}),
+                "simulator_quality": d.get("simulator_quality", {}),
+            } for d in dialogues],
+
     }
     
     output_path = os.path.join(output_dir, "simulated_dialogues_v2.json")

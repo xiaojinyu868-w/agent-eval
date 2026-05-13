@@ -39,12 +39,33 @@ source .env
 
 > 项目通过裸 socket 直连内部代理 `mmdcadamsminiserverproxy.polaris:25340`（绕过 HTTP 客户端限制），调用 `kimi_k2d6` 模型。无 token 时所有 LLM 请求都会被拒。
 
-### 2. 运行 v3 完整评测
+### 2. 大赛交付入口：读取官方 Excel 批量评测
 
 ```bash
-# 生成 8 条多样化对话 + 每条评测 5 次
-python src/eval_v3_runner.py --n-dialogues 8 --n-runs 5
+# 跑官方 Excel 中全部任务：每个任务生成 8 条多样化对话，每条评测 5 次
+python src/eval_v3_runner.py \
+  --instruction-file "命题二：外呼任务对话模型指令示例 (1).xlsx" \
+  --n-dialogues 8 \
+  --n-runs 5
 
+# 快速演示：只跑第 2 条任务，减少对话数和评测次数
+python src/eval_v3_runner.py \
+  --instruction-file data/instructions.json \
+  --instruction-id 2 \
+  --n-dialogues 2 \
+  --n-runs 2
+```
+
+输出目录默认在 `outputs/hackathon_run/`，每个任务独立保存：
+
+- `dialogues.json`：模拟用户、多轮对话、persona 与 simulator quality。
+- `report.md`：可解释评测报告、失败诊断、证据和改进建议。
+- `results.json`：机器可读分数、可靠性指标、失败分析。
+- `summary.json`：批量任务索引。
+
+### 3. 调试入口
+
+```bash
 # 复用已有对话（跳过生成）
 python src/eval_v3_runner.py --skip-generate --n-runs 5
 
@@ -70,7 +91,9 @@ python src/human_annotate.py # 交互式人工标注
 4. **证据锚定**：每个 YES 必须附带对话原文，`verify_evidence()` 找不到则降级为 PARTIAL（不归零）。
 5. **确定性校准**：字数、禁用词等用代码直接检查，作为约束维度的上界，**不与 LLM 判定混合**。
 6. **跨维度校准**：信息在错误步骤传达 → 打折；约束分极低 → info/task 跟着打折。
-7. **多次运行**：n_runs ≥ 2，报告 BCa 95% CI、ICC(1)、Gwet's AC1、Krippendorff's α、pass^k。
+7. **用户模拟器自检**：检测元评论泄漏、过长回复、persona 不一致、过度配合等 sim-to-real 风险。
+8. **失败诊断报告**：从 `run_details` 汇总 Top 失败项、证据、原因、瓶颈维度和可执行改进建议。
+9. **多次运行**：n_runs ≥ 2，报告 BCa 95% CI、ICC(1)、Gwet's AC1、Krippendorff's α、pass^k。
 
 灵感来源（详见 SURVEY.md）：Agent-as-a-Judge (Zhuge 2024)、RULERS (Hong 2026)、Rubric Is All You Need (Pathak 2025)、τ-bench (Yao 2024)、Sim2Real Gap (Zhou 2026)、Persona-driven (Gromada EMNLP 2025)。
 
@@ -90,9 +113,11 @@ agent-eval/
 ├── SURVEY.md                # 论文调研
 ├── CLAUDE.md                # 给 Claude Code 的开发指南
 ├── data/                    # 输入：任务指令
+│   ├── instructions.json    # 从官方 Excel 标准化抽取的任务指令
 │   ├── instruction_1.txt    # 站长外呼骑手（飞毛腿）
 │   └── instruction_2.txt    # 客服外呼机构（直播升级）
 ├── src/                     # 三代评测器代码
+│   └── instruction_loader.py # 零依赖读取 xlsx/txt/json 指令
 └── outputs/                 # 生成的对话 + 评测结果
 ```
 
